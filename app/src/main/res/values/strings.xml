@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">ProjectExample</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="cart">Корзина</string>
+    <string name="into_cart">В корзину</string>
+    <string name="cart_empty">Корзина пуста, добавьте продукты</string>
+    <string name="order">Заказать</string>
+    <string name="take_off_from_cart">Убрать из корзины</string>
+</resources>
