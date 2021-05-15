@@ -3,23 +3,26 @@ package com.smqpro.projectexample.ui.product
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.smqpro.projectexample.R
 import com.smqpro.projectexample.databinding.FragmentProductBinding
-import com.smqpro.projectexample.ui.MainActivity
 import com.smqpro.projectexample.ui.adapter.ProductAdapter
-import com.smqpro.projectexample.util.DataState
+import com.smqpro.projectexample.ui.main.MainActivity
 import com.smqpro.projectexample.util.MarginItemDecoration
+import com.smqpro.projectexample.util.onSwipeToDeleteListener
+import com.smqpro.projectexample.util.showSnackbar
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 class ProductFragment : Fragment() {
     private var _binding: FragmentProductBinding? = null
     private val binding get() = _binding!!
     private val productAdapter = ProductAdapter()
     private val mainViewModel by lazy { (activity as MainActivity).mainViewModel }
+    private var uiStateJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,27 +49,42 @@ class ProductFragment : Fragment() {
 
     private fun setListeners() = binding.apply {
         productAdapter.setOnClickListener { _, product ->
+            if (product.isInCart) {
+                mainViewModel.setItemCountToZero(product.id)
+            } else {
+                mainViewModel.countItemUp(product.id)
+            }
             Toast.makeText(context, "$product", Toast.LENGTH_SHORT).show()
         }
-        productAdapter.setOnCartClickListener { _, product ->
-            mainViewModel.insertCartItem(product)
+        productAdapter.setOnCountUpListener { product ->
+            mainViewModel.countItemUp(product.id)
+        }
+        productAdapter.setOnCountDownListener { product ->
+            mainViewModel.countItemDown(product.id)
+        }
+        productAdapter.setOnCountZeroListener { product ->
+            mainViewModel.setItemCountToZero(product.id)
+        }
+        productAdapter.setOnEditProductListener {
+            val directions = ProductFragmentDirections
+                .actionProductFragmentToBottomSheetEditProductFragment(it)
+            findNavController().navigate(directions)
+        }
+        rv.onSwipeToDeleteListener {
+            val product = productAdapter.differ.currentList[it]
+            mainViewModel.deleteProduct(product)
+            showSnackbar("Продукт удален")
+        }
+        fab.setOnClickListener {
+            val directions = ProductFragmentDirections.actionProductFragmentToAddProductFragment()
+            findNavController().navigate(directions)
         }
     }
 
-    private fun collectFlow() = lifecycleScope.launchWhenCreated {
-        mainViewModel.productList.collect {
-            when (it) {
-                is DataState.Loading -> {
-                    binding.progressBar.isVisible = true
-                }
-                is DataState.Success -> {
-                    productAdapter.submitList(it.data)
-                    binding.progressBar.isVisible = false
-                }
-                is DataState.Error -> {
-                    binding.progressBar.isVisible = false
-                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
-                }
+    private fun collectFlow() {
+        uiStateJob = lifecycleScope.launch {
+            mainViewModel.productList.collect { productList ->
+                productAdapter.submitList(productList)
             }
         }
     }
@@ -90,6 +108,11 @@ class ProductFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onStop() {
+        uiStateJob?.cancel()
+        super.onStop()
     }
 
 }

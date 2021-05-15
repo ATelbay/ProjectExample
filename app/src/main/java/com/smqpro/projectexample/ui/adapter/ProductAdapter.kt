@@ -6,8 +6,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.AutoTransition
-import androidx.transition.TransitionManager
 import com.smqpro.projectexample.databinding.ProductItemBinding
 import com.smqpro.projectexample.model.dto.Product
 import com.smqpro.projectexample.util.Position
@@ -25,7 +23,7 @@ class ProductAdapter :
 
     }
 
-    private val differ = AsyncListDiffer(this, DIFF_CALLBACK)
+    val differ = AsyncListDiffer(this, DIFF_CALLBACK)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return ProductViewHolder(
@@ -62,44 +60,21 @@ class ProductAdapter :
 
             val countText = if (item.type == Product.ProductType.NUMBER) "шт" else "кг"
             productTitleTv.text = item.title
-            productIconIv.setImageResource(item.image)
             productCount.text = String.format("%d$countText", item.count)
 
-            productIconIv.setOnClickListener {
-                if (item.count == 0) {
-                    item.count = 1
-                    productCount.text = String.format("%d$countText", item.count)
-                    countLayout.visibility = View.VISIBLE
-                    TransitionManager.beginDelayedTransition(root, AutoTransition())
-                } else {
-                    countLayout.visibility = View.GONE
-                    TransitionManager.beginDelayedTransition(root, AutoTransition())
-                    item.count = 0
-                }
-
-                adapter.notifyItemChanged(bindingAdapterPosition)
-                adapter.onClickListener?.let { it(bindingAdapterPosition, item) }
-            }
-
-            cartButton.setOnClickListener {
-                adapter.onCartClickListener?.let { it(bindingAdapterPosition, item) }
-            }
+            productTitleTv.setOnClickListener { adapter.onClickListener?.let { it(bindingAdapterPosition, item) } }
 
             countUpButton.setOnClickListener {
-                item.count += 1
-                productCount.text = String.format("%d$countText", item.count)
+                adapter.onCountUpListener?.let { it(item) }
             }
 
             countDownButton.setOnClickListener {
-                item.count -= 1
-                if (item.count == 0) {
-                    countLayout.visibility = View.GONE
-                    TransitionManager.beginDelayedTransition(root, AutoTransition())
-                    adapter.notifyItemChanged(bindingAdapterPosition)
-                }
-                productCount.text = String.format("%d$countText", item.count)
+                adapter.onCountDownListener?.let { it(item) }
+            }
 
-
+            productTitleTv.setOnLongClickListener {
+                adapter.onEditProductListener?.let { it(item) }
+                true
             }
 
         }
@@ -112,8 +87,23 @@ class ProductAdapter :
         onClickListener = listener
     }
 
-    private var onCartClickListener: ((Position, Product) -> Unit)? = null
-    fun setOnCartClickListener(listener: (Position, Product) -> Unit) {
-        onCartClickListener = listener
+    private var onCountUpListener: ((Product) -> Unit)? = null
+    fun setOnCountUpListener (listener: (Product) -> Unit) {
+        onCountUpListener = listener
+    }
+
+    private var onCountDownListener: ((Product) -> Unit)? = null
+    fun setOnCountDownListener (listener: (Product) -> Unit) {
+        onCountDownListener = listener
+    }
+
+    private var onCountZeroListener: ((Product) -> Unit)? = null
+    fun setOnCountZeroListener (listener: (Product) -> Unit) {
+        onCountZeroListener = listener
+    }
+
+    private var onEditProductListener: ((Product) -> Unit)? = null
+    fun setOnEditProductListener(listener: (Product) -> Unit) {
+        onEditProductListener = listener
     }
 }

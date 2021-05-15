@@ -1,4 +1,4 @@
-package com.smqpro.projectexample.ui
+package com.smqpro.projectexample.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

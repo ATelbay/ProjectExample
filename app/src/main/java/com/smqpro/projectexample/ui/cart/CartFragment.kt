@@ -6,11 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.smqpro.projectexample.R
 import com.smqpro.projectexample.databinding.FragmentCartBinding
-import com.smqpro.projectexample.ui.MainActivity
 import com.smqpro.projectexample.ui.adapter.CartAdapter
+import com.smqpro.projectexample.ui.main.MainActivity
 import com.smqpro.projectexample.util.MarginItemDecoration
+import com.smqpro.projectexample.util.onSwipeToDeleteListener
+import com.smqpro.projectexample.util.showSnackbar
 import kotlinx.coroutines.flow.collect
 
 class CartFragment : Fragment() {
@@ -40,12 +43,27 @@ class CartFragment : Fragment() {
             addItemDecoration(MarginItemDecoration(resources.getDimensionPixelSize(R.dimen.dp_16)))
         }
 
-
     }
 
     private fun setListeners() = binding.apply {
-        cartAdapter.setOnDeleteListener { _, product ->
-            mainViewModel.deleteCartItem(product)
+        cartAdapter.setOnCountUpListener { product ->
+            mainViewModel.countItemUp(product.id)
+        }
+        cartAdapter.setOnCountDownListener { product ->
+            mainViewModel.countItemDown(product.id)
+        }
+        cartAdapter.setOnEditProductListener {
+            val directions =
+                CartFragmentDirections.actionCartFragmentToBottomSheetEditProductFragment(it)
+            findNavController().navigate(directions)
+        }
+        rv.onSwipeToDeleteListener {
+            val product = cartAdapter.differ.currentList[it]
+            mainViewModel.setItemCountToZero(product.id)
+            showSnackbar("Продукт убран из корзины")
+        }
+        clearCartButton.setOnClickListener {
+            mainViewModel.setAllItemCountToZero()
         }
     }
 
@@ -55,14 +73,14 @@ class CartFragment : Fragment() {
                 binding.apply {
                     emptyCartTv.visibility = View.GONE
                     rv.visibility = View.VISIBLE
-                    orderButton.visibility = View.VISIBLE
+                    clearCartButton.visibility = View.VISIBLE
                 }
                 cartAdapter.submitList(it)
             } else {
                 binding.apply {
                     emptyCartTv.visibility = View.VISIBLE
                     rv.visibility = View.GONE
-                    orderButton.visibility = View.GONE
+                    clearCartButton.visibility = View.GONE
                 }
             }
         }

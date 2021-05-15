@@ -7,4 +7,7 @@
     <string name="cart_empty">Корзина пуста, добавьте продукты</string>
     <string name="order">Заказать</string>
     <string name="take_off_from_cart">Убрать из корзины</string>
+    <string name="enter_product_name">Введите название продукта</string>
+    <string name="choose_product_type">Выберите тип продукта</string>
+    <string name="clear">Очистить корзину</string>
 </resources>

@@ -1,12 +1,13 @@
-package com.smqpro.projectexample.ui
+package com.smqpro.projectexample.ui.main
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import androidx.activity.viewModels
+import androidx.navigation.NavController
+import androidx.navigation.Navigation
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.NavigationUI
 import com.smqpro.projectexample.R
 import com.smqpro.projectexample.databinding.ActivityMainBinding
 import com.smqpro.projectexample.model.AppDatabase
@@ -28,7 +29,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun setUi() {
         setViews()
-        setSupportActionBar(binding?.toolbar)
     }
 
     private fun setViews() = binding?.apply {
@@ -37,7 +37,12 @@ class MainActivity : AppCompatActivity() {
         val navGraph = graphInflater.inflate(R.navigation.nav_graph_main)
         val navController = navHostFragment.navController
         navController.graph = navGraph
+        NavigationUI.setupActionBarWithNavController(this@MainActivity, navController);
 
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        return findNavController(R.id.nav_host).navigateUp()
     }
 
 }
